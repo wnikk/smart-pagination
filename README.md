@@ -102,22 +102,28 @@ Install via Composer:
 composer require wnikk/smart-pagination
 ```
 
-
 ## Usage
-In your controller:
+For basic usage, you can use the `smartPaginate` method on your Eloquent model.
+This method will automatically handle pagination with the latest items first and generate reverse pagination links.
+
+For example, if you have a `Post` model and want to paginate the latest posts on controller:
 ```php
-$posts = \App\Models\Post::orderByDesc('created_at')->paginate(10);
+$posts = \App\Models\Post::orderByDesc('created_at')->smartPaginate(10, reverse: true);
 ```
 In your Blade view (by default):
 ```blade
-<x-smart-pagination :paginator="$posts" />
+by default:
+{{ $posts->links() }}
+by SEO-friendly:
+{{ $posts->links(['pagePattern' => 'news-p{page}.html']) }}
 ```
-In your Blade view (SEO-links + SEO-friendly):
+Or your Blade custom view full version of params (SEO-friendly):
 ```blade
 <x-smart-pagination 
-    :paginator="$news" 
+    :paginator="$posts" 
     :reverse="true"
-    page-pattern="news-p{page}.html" 
+    :page-pattern="news-p{page}.html"
+    :show-prev-next="true"
 />
 ```
 

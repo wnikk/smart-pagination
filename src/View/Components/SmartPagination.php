@@ -16,28 +16,28 @@ class SmartPagination extends Component
      *
      * @var string
      */
-    public string $pagePattern;// default: '?page={page}';
+    public string $pagePattern = '';// default: '?page={page}';
 
     /**
      * The paginator instance
      *
      * @var LengthAwarePaginator
      */
-    protected LengthAwarePaginator $paginator;
+    public LengthAwarePaginator $paginator;
 
     /**
      * Current real page number from paginator
      *
      * @var int
      */
-    public int $realPage;
+    public int $realPage = 1;
 
     /**
      * Total number of pages
      *
      * @var int
      */
-    public int $total;
+    public int $totalPages = 1;
 
     /**
      * Displayed page number (adjusted for reverse mode)
@@ -51,30 +51,49 @@ class SmartPagination extends Component
      *
      * @var string
      */
-    public string $baseUrl;
+    public string $baseUrl = '';
 
     /**
      * Whether pagination is in reverse mode
      *
      * @var bool
      */
-    public bool $reverse;
+    public bool $reverse = false;
+
+    /**
+     * Whether to show "Previous" and "Next" links
+     *
+     * @var bool
+     */
+    public bool $showPrevNext = true;
 
     /**
      * Create a new component instance.
      *
-     * @param LengthAwarePaginator $paginator
+     * @param LengthAwarePaginator|array $paginator
      * @param bool|null $reverse
      */
-    public function __construct(LengthAwarePaginator $paginator, ?bool $reverse = null, ?string $pagePattern = null)
+    public function __construct(LengthAwarePaginator|array $paginator, ?bool $reverse = null, ?string $pagePattern = null, ?bool $showPrevNext = null)
     {
+        if (is_array($paginator)) {
+            $reverse = $paginator['reverse'] ?? $reverse;
+            $pagePattern = $paginator['pagePattern'] ?? $pagePattern;
+            $showPrevNext = $paginator['showPrevNext'] ?? $showPrevNext;
+            $paginator = $paginator['paginator'] ?? null;
+        }
+        if (!$paginator instanceof LengthAwarePaginator) {
+            throw new \InvalidArgumentException('Expected paginator to be an instance of LengthAwarePaginator.');
+        }
+
         $this->paginator = $paginator;
         $this->realPage = $paginator->currentPage();
-        $this->total = $paginator->lastPage();
+        $this->totalPages = $paginator->lastPage();
 
-        $this->reverse = $this->resolveReverse($reverse);
+        $this->reverse = $reverse ?? config('smart-pagination.reverse_by_default', false);
+        $this->showPrevNext = $showPrevNext ?? config('smart-pagination.show_prev_next', true);
+
         $this->displayPage = $this->reverse
-            ? $this->total - $this->realPage + 1
+            ? $this->totalPages - $this->realPage + 1
             : $this->realPage;
 
         $this->pagePattern = $pagePattern??'';
@@ -85,9 +104,20 @@ class SmartPagination extends Component
      *
      * @return \Illuminate\Contracts\View\View|\Closure|string
      */
-    public function render()
+    public function render($data = [])
     {
-        return view('smart-pagination::components.smart-pagination');
+        $data = $data + [
+            'paginator' => $this->paginator,
+            'realPage' => $this->realPage,
+            'totalPages' => $this->totalPages,
+            'displayPage' => $this->displayPage,
+            'baseUrl' => $this->baseUrl,
+            'reverse' => $this->reverse,
+            'pagePattern' => $this->pagePattern,
+            'showPrevNext' => $this->showPrevNext,
+            'pageUrl' => [$this, 'pageUrl'],
+        ];
+        return view('smart-pagination::components.smart-pagination', $data);
     }
 
     /**
@@ -99,7 +129,7 @@ class SmartPagination extends Component
     public function pageUrl(int $realPage): string
     {
         $displayPage = $this->reverse
-            ? $this->total - $realPage + 1
+            ? $this->totalPages - $realPage + 1
             : $realPage;
 
         // Return the URL without the page parameter
@@ -132,20 +162,5 @@ class SmartPagination extends Component
 
         // Otherwise treat as path segment
         return $baseUrl . $pagePart;
-    }
-
-    /**
-     * Determine reverse mode from config or override.
-     *
-     * @param bool|null $override
-     * @return bool
-     */
-    private function resolveReverse(?bool $override): bool
-    {
-        if (!is_null($override)) {
-            return $override;
-        }
-
-        return config('smart-pagination.reverse_by_default', false);
     }
 }

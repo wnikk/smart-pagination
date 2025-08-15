@@ -1,7 +1,9 @@
 <?php
 
 return [
-    'previous' => 'Previous',
-    'next' => 'Next',
-    'dots' => '…',
+    'previous' => '«',
+    'next' => '»',
+    'previous-label' => 'Previous',
+    'next-label' => 'Next',
+    'dots' => '...',
 ];
