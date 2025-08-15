@@ -1,0 +1,34 @@
+{
+    "name": "wnikk/smart-pagination",
+    "version": "0.4.2-dev",
+    "description": "Reverse pagination for Laravel with SEO-friendly links and stable URLs",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Nikolay May",
+            "homepage": "https://nikk.dev",
+            "role": "Developer"
+        }
+    ],
+    "homepage": "https://github.com/wnikk/smart-pagination",
+    "bugs": {
+        "url": "https://github.com/wnikk/smart-pagination/issues"
+    },
+    "autoload": {
+        "psr-4": {
+            "Wnikk\\SmartPagination\\": "src/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Wnikk\\SmartPagination\\SmartPaginationServiceProvider"
+            ]
+        }
+    },
+    "require": {
+        "php": "^8.0",
+        "illuminate/support": "^10.0|^11.0|^12.0"
+    }
+}
