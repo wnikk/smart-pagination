@@ -1,6 +1,6 @@
 {
     "name": "wnikk/smart-pagination",
-    "version": "0.4.2-dev",
+    "version": "0.6.13-dev",
     "description": "Reverse pagination for Laravel with SEO-friendly links and stable URLs",
     "type": "library",
     "license": "MIT",
@@ -20,6 +20,11 @@
             "Wnikk\\SmartPagination\\": "src/"
         }
     },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\": "tests"
+        }
+    },
     "extra": {
         "laravel": {
             "providers": [
@@ -30,5 +35,9 @@
     "require": {
         "php": "^8.0",
         "illuminate/support": "^10.0|^11.0|^12.0"
+    },
+    "require-dev": {
+        "orchestra/testbench": "*",
+        "phpunit/phpunit": "*"
     }
 }

@@ -12,6 +12,20 @@ use Illuminate\View\Component;
 class SmartPagination extends Component
 {
     /**
+     * Pattern used to generate page URLs
+     *
+     * @var string
+     */
+    public string $pagePattern;// default: '?page={page}';
+
+    /**
+     * The paginator instance
+     *
+     * @var LengthAwarePaginator
+     */
+    protected LengthAwarePaginator $paginator;
+
+    /**
      * Current real page number from paginator
      *
      * @var int
@@ -52,8 +66,9 @@ class SmartPagination extends Component
      * @param LengthAwarePaginator $paginator
      * @param bool|null $reverse
      */
-    public function __construct(LengthAwarePaginator $paginator, ?bool $reverse = null)
+    public function __construct(LengthAwarePaginator $paginator, ?bool $reverse = null, ?string $pagePattern = null)
     {
+        $this->paginator = $paginator;
         $this->realPage = $paginator->currentPage();
         $this->total = $paginator->lastPage();
 
@@ -62,7 +77,7 @@ class SmartPagination extends Component
             ? $this->total - $this->realPage + 1
             : $this->realPage;
 
-        $this->baseUrl = $this->resolveBaseUrl();
+        $this->pagePattern = $pagePattern??'';
     }
 
     /**
@@ -78,46 +93,45 @@ class SmartPagination extends Component
     /**
      * Generate URL for a given display page.
      *
-     * @param int $displayPage
+     * @param int $realPage
      * @return string
      */
-    public function pageUrl(int $displayPage): string
+    public function pageUrl(int $realPage): string
     {
-        $realPage = $this->reverse
-            ? $this->total - $displayPage + 1
-            : $displayPage;
+        $displayPage = $this->reverse
+            ? $this->total - $realPage + 1
+            : $realPage;
 
-        return $realPage === 1 ? $this->baseUrl : $this->baseUrl . $realPage;
-    }
+        // Return the URL without the page parameter
+        if ($realPage === 1) {
+            return $this->paginator->path();
+        }
 
-    /**
-     * Generate canonical URL for SEO.
-     * Includes all query parameters except 'page'.
-     * Omits page parameter if it's the first page.
-     *
-     * @return string
-     */
-    public function canonicalUrl(): string
-    {
-        $params = request()->except('page');
-        $query = http_build_query($params);
+        // If no custom pattern is provided, use paginator's default URL
+        if (!$this->pagePattern) {
+            return $this->paginator->url($displayPage);
+        }
 
-        $isFirstPage = $this->realPage === 1;
+        // Validate that the pattern contains the {page} placeholder
+        if (!str_contains($this->pagePattern, '{page}')) {
+            throw new \InvalidArgumentException("Page pattern must contain '{page}' placeholder.");
+        }
+        $pagePart = str_replace('{page}', $displayPage, $this->pagePattern);
 
-        return url()->current() . ($query ? '?' . $query : '');
-    }
+        // Get base path from paginator
+        $baseUrl = rtrim($this->paginator->path(), '/');
 
-    /**
-     * Build base URL for pagination links.
-     *
-     * @return string
-     */
-    private function resolveBaseUrl(): string
-    {
-        $params = request()->except('page');
-        $query = http_build_query($params);
+        // If pattern starts with '?', treat as query string
+        if (str_starts_with($pagePart, '?')) {
+            $params = $this->paginator->getOptions()['query'] ?? [];
+            unset($params['page']);
+            $query = http_build_query($params);
+            $prefix = $query ? '?' . $query . '&' : '?';
+            return $baseUrl . $prefix . ltrim($pagePart, '?');
+        }
 
-        return url()->current() . ($query ? '?' . $query . '&page=' : '?page=');
+        // Otherwise treat as path segment
+        return $baseUrl . $pagePart;
     }
 
     /**
