@@ -2,6 +2,7 @@
 namespace Tests\Unit;
 
 use Tests\TestCase;
+use Tests\Fixtures\ArticleModel;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Wnikk\SmartPagination\View\Components\SmartPagination;
@@ -124,5 +125,80 @@ class SmartPaginationTest extends TestCase
         $paginator = $this->createPaginator(1);
         $component = new SmartPagination($paginator, false, 'invalid-pattern-without-placeholder');
         $component->pageUrl(2);
+    }
+
+    /**
+     * Test the pagination of ArticleModel using paginate.
+     */
+    public function test_article_model_pagination()
+    {
+        // Create 100 articles
+        ArticleModel::factory()->count(100)->create();
+
+        // default paginate articles (10 per page)
+        $paginator = ArticleModel::paginate(10);
+        $paginator->withPath('/article');
+
+        $this->assertEquals('/article', $paginator->path());
+        $this->assertEquals('/article?page=1', $paginator->url(1));// default page 1 URL
+        $this->assertEquals('/article?page=2', $paginator->url(2));
+        $this->assertEquals('/article?page=10', $paginator->url(10));
+    }
+
+    /**
+     * Test the pagination of ArticleModel using smartPaginate.
+     */
+    public function test_article_model_smart_pagination()
+    {
+        // Create 100 articles
+        ArticleModel::factory()->count(100)->create();
+
+        // Smart paginate articles (10 per page)
+        $paginator = ArticleModel::smartPaginate(10);
+        $paginator->withPath('/article');
+
+        $this->assertEquals('/article', $paginator->path());
+        $this->assertEquals('/article', $paginator->pageUrl(1)); // reverse: display first page →  page 1
+        $this->assertEquals('/article?page=2', $paginator->pageUrl(2)); // reverse: display page 2 →  page 2
+        $this->assertEquals('/article?page=10', $paginator->pageUrl(10)); // reverse: last page → display page 10
+        $this->assertEquals(10, $paginator->lastPage());
+    }
+
+    /**
+     * Test the pagination of ArticleModel using smartPaginate reverse.
+     */
+    public function test_article_model_smart_pagination_reverse()
+    {
+        // Create 100 articles
+        ArticleModel::factory()->count(100)->create();
+
+        // Smart paginate articles (10 per page)
+        $paginator = ArticleModel::smartPaginate(10, reverse: true);
+        $paginator->withPath('/article');
+
+        $this->assertEquals('/article', $paginator->path());
+        $this->assertEquals('/article', $paginator->pageUrl(1)); // reverse: display first page →  page 1
+        $this->assertEquals('/article?page=9', $paginator->pageUrl(2)); // reverse: display page 9 →  page 2
+        $this->assertEquals('/article?page=1', $paginator->pageUrl(10)); // reverse: last page → display page 10
+        $this->assertEquals(10, $paginator->lastPage());
+    }
+
+    /**
+     * Test the pagination of ArticleModel using smartPaginate reverse + SEO.
+     */
+    public function test_article_model_smart_pagination_reverse_seo()
+    {
+        // Create 100 articles
+        ArticleModel::factory()->count(100)->create();
+
+        // Smart paginate articles (10 per page)
+        $paginator = ArticleModel::smartPaginate(10, reverse: true);
+        $paginator->withPath('/article', '/p{page}.html'); // custom pattern for SEO
+
+        $this->assertEquals('/article', $paginator->path());
+        $this->assertEquals('/article', $paginator->pageUrl(1)); // reverse: display first page →  page 1
+        $this->assertEquals('/article/p9.html', $paginator->pageUrl(2)); // reverse: display page 9 →  page 2
+        $this->assertEquals('/article/p1.html', $paginator->pageUrl(10)); // reverse: last page → display page 10
+        $this->assertEquals(10, $paginator->lastPage());
     }
 }

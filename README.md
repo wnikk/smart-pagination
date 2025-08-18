@@ -48,8 +48,9 @@ You can define your own `pagePattern` using `{page}` as a placeholder:
 |--------------|------------------------|
 | `page-{page}` | `/blog/page-2`         |
 | `news-p{page}.html` | `/news/news-p2.html`   |
-| `archive-{page}y` | `/archive?p=2`         |
-| `products`   | `/products/1`          |
+| `archive-{page}y` | `/archive-2y`          |
+
+---
 
 ## 🔁 Reverse Pagination: Keep Your URLs Stable as Content Grows
 
@@ -109,20 +110,19 @@ This method will automatically handle pagination with the latest items first and
 For example, if you have a `Post` model and want to paginate the latest posts on controller:
 ```php
 $posts = \App\Models\Post::orderByDesc('created_at')->smartPaginate(10, reverse: true);
+$posts->withPath('/post', '/page-{page}.html'); 
 ```
 In your Blade view (by default):
 ```blade
-by default:
+By default:
 {{ $posts->links() }}
-by SEO-friendly:
-{{ $posts->links(['pagePattern' => 'news-p{page}.html']) }}
 ```
 Or your Blade custom view full version of params (SEO-friendly):
 ```blade
 <x-smart-pagination 
     :paginator="$posts" 
     :reverse="true"
-    :page-pattern="news-p{page}.html"
+    :page-pattern="post-p{page}.html"
     :show-prev-next="true"
 />
 ```
