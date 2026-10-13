@@ -90,6 +90,32 @@ class SmartPaginator extends LengthAwarePaginator
     }
 
     /**
+     * Number of pages shown on each side of the current one.
+     *
+     * @param  int   $count
+     * @return $this
+     */
+    public function onEachSide($count): static
+    {
+        $this->onEachSide              = max(0, (int) $count);
+        $this->component()->onEachSide = $this->onEachSide;
+
+        return $this;
+    }
+
+    /**
+     * Number of pages shown at each edge; 0 hides the first and last pages.
+     *
+     * @return $this
+     */
+    public function onEachEdge(int $count): static
+    {
+        $this->component()->onEachEdge = max(0, $count);
+
+        return $this;
+    }
+
+    /**
      * Query string parameters added with appends().
      *
      * @return array<string, mixed>

@@ -173,6 +173,19 @@ Route::get('/news', [NewsController::class, 'index']);
 
 and pass the page to the macro: `smartPaginate(10, page: $page, reverse: true)`.
 
+### Size of the page window
+
+By default the links show two pages at each edge and two pages on each side of the current one,
+with dots in the gaps: `1 2 ... 4 5 6 7 8 9 10`. Change it per paginator:
+
+```php
+$posts->onEachSide(1)->onEachEdge(1);   // 1 ... 4 5 6 ... 10
+$posts->onEachSide(1)->onEachEdge(0);   // 4 5 6
+```
+
+or on the component with `:on-each-side="1"` and `:on-each-edge="1"`,
+or for the whole app with the config keys `on_each_side` and `on_each_edge`.
+
 ### Query string and fragment
 
 `appends()` and `fragment()` work as usual and are kept in every link:
@@ -192,6 +205,8 @@ Use the component directly, with `smartPaginate()` or with a plain `paginate()` 
     :reverse="true"
     page-pattern="/page-{page}"
     :show-prev-next="false"
+    :on-each-side="2"
+    :on-each-edge="2"
 />
 ```
 
@@ -203,10 +218,10 @@ Or pass options to `links()`:
 ```
 
 The view gets `$paginator`, `$realPage`, `$displayPage`, `$totalPages`, `$reverse`,
-`$showPrevNext`, `$pageUrl($realPage)`, `$pageLabel($realPage)` and `$pages()`.
+`$showPrevNext`, `$onEachSide`, `$onEachEdge`, `$pageUrl($realPage)`, `$pageLabel($realPage)` and `$pages()`.
 
-`$pages()` returns the window to render: the first two pages, two around the current one,
-the last two, and `dots` entries for the gaps. Each page entry has `real`, `label`, `url`
+`$pages()` returns the window to render: the edge pages, the pages around the current one,
+and `dots` entries for the gaps. Each page entry has `real`, `label`, `url`
 and `active`.
 
 ### JSON and APIs
@@ -226,6 +241,8 @@ php artisan vendor:publish --tag=smart-pagination-lang
 return [
     'reverse_by_default' => false,
     'page_pattern' => null,      // for example '/page-{page}'
+    'on_each_side' => 2,
+    'on_each_edge' => 2,
     'show_prev_next' => true,
 ];
 ```

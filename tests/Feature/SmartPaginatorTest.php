@@ -174,6 +174,18 @@ class SmartPaginatorTest extends TestCase
         $this->assertSame('custom:1/10/10', trim($html));
     }
 
+    public function test_on_each_side_and_edge_are_chainable(): void
+    {
+        $paginator = ArticleModel::smartPaginate(10, page: 5)->withPath('/article')->onEachSide(1)->onEachEdge(1);
+
+        $labels = array_column($paginator->toArray()['links'], 'label');
+        $this->assertSame(['&laquo; Previous', '1', '...', '4', '5', '6', '...', '10', 'Next &raquo;'], $labels);
+
+        $html = $paginator->links()->render();
+        $this->assertStringNotContainsString('>2</a>', $html);
+        $this->assertStringContainsString('href="/article?page=4">4</a>', $html);
+    }
+
     public function test_links_hide_prev_next_from_config(): void
     {
         config(['smart-pagination.show_prev_next' => false]);

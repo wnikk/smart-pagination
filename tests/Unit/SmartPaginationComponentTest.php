@@ -162,6 +162,34 @@ class SmartPaginationComponentTest extends TestCase
         $this->assertSame([], array_filter($component->pages(), fn ($p) => $p['active'] ?? false));
     }
 
+    public function test_window_size_from_arguments(): void
+    {
+        $component = new SmartPagination($this->paginator(5), false, onEachSide: 1, onEachEdge: 1);
+        $this->assertSame([1, 'dots', 4, 5, 6, 'dots', 10], $this->shape($component->pages()));
+
+        $component = new SmartPagination($this->paginator(5), false, onEachSide: 1, onEachEdge: 0);
+        $this->assertSame([4, 5, 6], $this->shape($component->pages()));
+
+        $component = new SmartPagination($this->paginator(1), true, onEachSide: 0, onEachEdge: 0);
+        $this->assertSame([10], $this->shape($component->pages()));
+    }
+
+    public function test_window_size_from_config(): void
+    {
+        config(['smart-pagination.on_each_side' => 3, 'smart-pagination.on_each_edge' => 1]);
+
+        $component = new SmartPagination($this->paginator(6), false);
+
+        $this->assertSame([1, 'dots', 3, 4, 5, 6, 7, 8, 9, 10], $this->shape($component->pages()));
+    }
+
+    public function test_negative_window_size_is_treated_as_zero(): void
+    {
+        $component = new SmartPagination($this->paginator(5), false, onEachSide: -3, onEachEdge: -1);
+
+        $this->assertSame([5], $this->shape($component->pages()));
+    }
+
     /** @return list<int|string> */
     protected function shape(array $pages): array
     {

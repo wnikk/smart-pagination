@@ -40,11 +40,23 @@ class SmartPagination extends Component
 
     public bool $showPrevNext = true;
 
+    /**
+     * Pages shown on each side of the current one.
+     */
+    public int $onEachSide = 2;
+
+    /**
+     * Pages shown at each edge (first and last). 0 hides the edges.
+     */
+    public int $onEachEdge = 2;
+
     public function __construct(
         LengthAwarePaginator $paginator,
         ?bool $reverse = null,
         ?string $pagePattern = null,
         ?bool $showPrevNext = null,
+        ?int $onEachSide = null,
+        ?int $onEachEdge = null,
     ) {
         $this->paginator  = $paginator;
         $this->realPage   = $paginator->currentPage();
@@ -53,6 +65,8 @@ class SmartPagination extends Component
         $this->reverse      = $reverse ?? (bool) config('smart-pagination.reverse_by_default', false);
         $this->showPrevNext = $showPrevNext ?? (bool) config('smart-pagination.show_prev_next', true);
         $this->displayPage  = $this->pageLabel($this->realPage);
+        $this->onEachSide   = max(0, $onEachSide ?? (int) config('smart-pagination.on_each_side', 2));
+        $this->onEachEdge   = max(0, $onEachEdge ?? (int) config('smart-pagination.on_each_edge', 2));
 
         $pagePattern ??= (string) config('smart-pagination.page_pattern', '');
         if ($pagePattern !== '') {
@@ -118,21 +132,24 @@ class SmartPagination extends Component
     }
 
     /**
-     * Pages to show: the first two, two around the current one, the last two, with dots in the gaps.
+     * Pages to show: onEachEdge pages at both ends, onEachSide pages around the current one, dots in the gaps.
      *
      * @return list<array{type: 'dots'}|array{type: 'page', real: int, label: int, url: string, active: bool}>
      */
     public function pages(): array
     {
-        $center  = min(max($this->realPage, 1), $this->totalPages);
-        $wanted  = [1, 2, $center - 2, $center - 1, $center, $center + 1, $center + 2, $this->totalPages - 1, $this->totalPages];
+        $center = min(max($this->realPage, 1), $this->totalPages);
+        $wanted = range($center - $this->onEachSide, $center + $this->onEachSide);
+        if ($this->onEachEdge > 0) {
+            $wanted = [...range(1, $this->onEachEdge), ...$wanted, ...range($this->totalPages - $this->onEachEdge + 1, $this->totalPages)];
+        }
         $numbers = array_values(array_unique(array_filter($wanted, fn (int $n) => $n >= 1 && $n <= $this->totalPages)));
         sort($numbers);
 
         $pages    = [];
         $previous = 0;
         foreach ($numbers as $n) {
-            if ($n - $previous > 1) {
+            if ($previous > 0 && $n - $previous > 1) {
                 $pages[] = ['type' => 'dots'];
             }
             $pages[] = [

@@ -37,6 +37,17 @@ class BladeComponentTest extends TestCase
         $this->assertStringContainsString('href="/posts?page=2">2</a>', $html);
     }
 
+    public function test_component_tag_with_window_size(): void
+    {
+        $posts = ArticleModel::paginate(10, page: 5)->withPath('/posts');
+
+        $html = Blade::render('<x-smart-pagination :paginator="$posts" :on-each-side="1" :on-each-edge="0" :show-prev-next="false" />', compact('posts'));
+
+        $this->assertSame(3, substr_count($html, 'page-item'));
+        $this->assertStringContainsString('href="/posts?page=4">4</a>', $html);
+        $this->assertStringContainsString('href="/posts?page=6">6</a>', $html);
+    }
+
     public function test_nothing_is_rendered_for_one_page(): void
     {
         $posts = ArticleModel::paginate(100)->withPath('/posts');
