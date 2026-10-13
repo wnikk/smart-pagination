@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'label' => 'Pagination',
     'previous' => '«',
     'next' => '»',
     'previous-label' => 'Previous',

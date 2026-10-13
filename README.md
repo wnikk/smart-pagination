@@ -1,142 +1,246 @@
 # Smart Pagination for Laravel
 
-SmartPagination is a Laravel Blade component that simplifies pagination rendering and adds support
-for reverse pagination (descending page numbers).
-It’s designed to be flexible, SEO-friendly, and easy to customize.
+Reverse pagination for Laravel with SEO-friendly links and stable URLs.
 
-Designed for blogs, news feeds, and any content that grows over time.
+Newest content is on the first page, old pages keep their URL forever.
+Built for blogs, news feeds, changelogs and any list that grows over time.
+
+[![Tests](https://github.com/wnikk/smart-pagination/actions/workflows/tests.yml/badge.svg)](https://github.com/wnikk/smart-pagination/actions/workflows/tests.yml)
 
 ## Features
-- Stable URLs — older content stays on the same page even as new items are added
-- SEO-Friendly — search engines retain indexing without shifting links
-- User-Centric — newest content always appears on the first page
-- Blade component - easy to use in Blade templates with Bootstrap-ready markup
-- Flexible Routing - supports custom URL patterns via `page-pattern`
-- Preserves all other query parameters
-- Reverse pagination support - show newest content first
 
----
+- **Stable URLs**: older content stays on the same page as new items arrive.
+- **SEO-friendly**: custom URL patterns such as `/blog/page-2` or `/news-p3.html`.
+- **Reverse numbering**: the newest page has no number, the oldest page is page 1.
+- **One source of URLs**: `links()`, `url()`, `nextPageUrl()`, `toArray()` and JSON all agree.
+- **Blade component** with Bootstrap-ready markup, `rel="prev"` / `rel="next"`, query string kept.
+- **Works with any paginator**: use the component with the result of `paginate()` too.
+
+## Requirements
+
+- PHP 8.4+
+- Laravel 13
+
+For Laravel 11 and 12 use version `^1.18`.
+
+## Installation
+
+```bash
+composer require wnikk/smart-pagination
+```
 
 ## 🌐 SEO-Friendly Pagination with Custom URL Patterns
 
-SmartPagination allows you to generate clean, customizable,
-and SEO-optimized pagination URLs for your applications.
-Instead of relying on default query parameters like `?page=2`,
-you can define your own URL patterns such as `/blog/page-2`, `/news-p3.html`, or even `/archive-4y.html`.
+SmartPagination lets you generate clean, customizable and SEO-optimized pagination URLs.
+Instead of relying on default query parameters like `?page=2`, you define your own URL
+patterns such as `/blog/page-2`, `/news-p3.html` or even `/archive-4y`.
 
 ### ✅ Why It Matters for SEO
 
-Search engines prefer stable, predictable URLs. When paginated content (like blog posts, product listings, or news articles) grows over time, traditional pagination can cause older content to shift across pages — which may lead to:
+Search engines prefer stable, predictable URLs. When paginated content (blog posts, product
+listings, news articles) grows over time, traditional pagination makes older content shift
+across pages. This leads to:
 
 - Duplicate indexing
 - Loss of link equity
 - Lower rankings for older content
 
-With **reverse pagination** and **custom URL patterns**, you can ensure that:
+With **reverse pagination** and **custom URL patterns** you get:
 
 - The first page always shows the newest content
-- Older content remains accessible at the same URL
-- Search engines consistently index the same pages over time
+- Older content stays reachable at the same URL
+- Search engines index the same pages over time
 
 This improves crawl efficiency and preserves ranking signals for evergreen content.
 
 ### 🔧 Examples of Custom Patterns
 
-You can define your own `pagePattern` using `{page}` as a placeholder:
+Use `{page}` as a placeholder in your pattern:
 
-| Pattern      | Resulting URL (Page 2) |
-|--------------|------------------------|
-| `page-{page}` | `/blog/page-2`         |
-| `news-p{page}.html` | `/news/news-p2.html`   |
-| `archive-{page}y` | `/archive-2y`          |
-
----
+| Pattern | Resulting URL (page 2) |
+|---|---|
+| `/page-{page}` | `/blog/page-2` |
+| `-p{page}.html` | `/news-p2.html` |
+| `/archive-{page}y` | `/archive-2y` |
+| `?p={page}` | `/blog?p=2` |
 
 ## 🔁 Reverse Pagination: Keep Your URLs Stable as Content Grows
 
-Reverse pagination is a powerful feature that ensures your **newest content always appears on the first page**, while older content stays anchored to its original URLs. This is especially useful for blogs, news feeds, changelogs, or any time-sensitive content.
+Reverse pagination makes sure that the **newest content always appears on the first page**,
+while older content stays anchored to its original URL. This is what blogs, news feeds,
+changelogs and any time-sensitive content need.
 
-With **reverse pagination**, the first page always shows the latest items, and older pages remain unchanged — making your site more SEO-friendly.
+### 🔧 Example
 
-### 🔧 Examples of Reverse Pagination
+You have **100 articles**, sorted newest first, **10 per page**.
 
-You have **100 articles**, sorted by newest first (`DESC`), showing **10 per page**.
+#### 🔴 With reverse pagination disabled
 
-#### 🔴 With Reverse Pagination Disabled
-
-| Display Page | Real Page | Articles Shown |
-|--------------|-----------|----------------|
-| `/news` (page 1) | page 1 | 91–100 (newest) |
-| `/news/page-2` | page 2 | 81–90 |
+| URL | Real page | Articles shown |
+|---|---|---|
+| `/news` | 1 | 91–100 (newest) |
+| `/news/page-2` | 2 | 81–90 |
 | ... | ... | ... |
-| `/news/page-10` | page 10 | 1–10 (oldest) |
+| `/news/page-10` | 10 | 1–10 (oldest) |
 
-Tomorrow you publish 10 more articles (total: 110):
+Tomorrow you publish 10 more articles (total 110):
 
-| Display Page | Real Page | Articles Shown |
-|--------------|-----------|----------------|
-| `/news` (page 1) | page 1 | 101–110 (newest) |
-| `/news/page-2` | page 2 | 91–100 |
+| URL | Real page | Articles shown |
+|---|---|---|
+| `/news` | 1 | 101–110 (newest) |
+| `/news/page-2` | 2 | 91–100 (moved from page 1) |
 | ... | ... | ... |
-| `/news/page-11` | page 11 | 1–10 (still oldest) |
+| `/news/page-11` | 11 | 1–10 (moved from page 10) |
 
-#### ✅ With Reverse Pagination Enabled
+Every numbered page now shows different articles. Links from other sites and search
+engine indexes point at the wrong content.
 
-| Display Page      | Real Page | Articles Shown                 |
-|-------------------|-----------|--------------------------------|
-| `/news` (page 10) | page 1 | 91–100 (newest)                |
-| `/news/page-9`    | page 2 | 81–90         always on page-9 |
-| ...               | ... | ...                            |
-| `/news/page-1`    | page 10 | 1–10 (oldest) always on page-1 |
+#### ✅ With reverse pagination enabled
 
-#### Result:
+| URL | Real page | Articles shown |
+|---|---|---|
+| `/news` | 1 | 91–100 (newest) |
+| `/news/page-9` | 2 | 81–90, always on page 9 |
+| ... | ... | ... |
+| `/news/page-1` | 10 | 1–10 (oldest), always on page 1 |
+
+After the 10 new articles:
+
+| URL | Real page | Articles shown |
+|---|---|---|
+| `/news` | 1 | 101–110 (newest) |
+| `/news/page-10` | 2 | 91–100, a new page |
+| `/news/page-9` | 3 | 81–90, same as before |
+| ... | ... | ... |
+| `/news/page-1` | 11 | 1–10, same as before |
+
+#### Result
+
 - New content appears on the first page
 - Older content stays at the same URL
-- Search engines retain stable indexing
+- Search engines keep a stable index
 - No shifting of articles across pages
 
----
-
-## Installation
-Install via Composer:
-```bash
-composer require wnikk/smart-pagination
-```
-
 ## Usage
-For basic usage, you can use the `smartPaginate` method on your Eloquent model.
-This method will automatically handle pagination with the latest items first and generate reverse pagination links.
 
-For example, if you have a `Post` model and want to paginate the latest posts on controller:
+Controller:
+
 ```php
-$posts = \App\Models\Post::orderByDesc('created_at')->smartPaginate(10, reverse: true);
-$posts->withPath('/post', '/page-{page}.html'); 
+$posts = Post::orderByDesc('created_at')->smartPaginate(10, reverse: true);
+$posts->withPath('/post', '/page-{page}.html');
 ```
-In your Blade view (by default):
+
+Blade:
+
 ```blade
-By default:
 {{ $posts->links() }}
 ```
-Or your Blade custom view full version of params (SEO-friendly):
+
+That is all. The macro reads `?page=` from the request, loads the right records and
+builds the links with the pattern.
+
+### The `smartPaginate` macro
+
+```php
+smartPaginate(?int $perPage = null, array $columns = ['*'], string $pageName = 'page', ?int $page = null, ?bool $reverse = null)
+```
+
+- `$page` is the number the visitor asked for. `null` reads it from the request.
+- `$reverse` `null` takes `reverse_by_default` from the config.
+- A page past the end returns an empty page, like `paginate()`.
+- Bad input (`?page=abc`, `?page=0`) returns the page without a number.
+
+### URL patterns
+
+A pattern must contain `{page}`. Set it with `withPath()` or `withPagePattern()`:
+
+```php
+$posts->withPath('/news', '/page-{page}');   // /news/page-2
+$posts->withPagePattern('-p{page}.html');    // /news-p2.html
+$posts->withPagePattern('?p={page}');        // /news?p=2
+```
+
+Without a pattern the links use `?page=2`. Real page 1 is always the bare path: `/news`.
+
+A default pattern can go into the config key `page_pattern`.
+
+Register a route that matches the pattern, for example:
+
+```php
+Route::get('/news/page-{page}', [NewsController::class, 'index'])->whereNumber('page');
+Route::get('/news', [NewsController::class, 'index']);
+```
+
+and pass the page to the macro: `smartPaginate(10, page: $page, reverse: true)`.
+
+### Query string and fragment
+
+`appends()` and `fragment()` work as usual and are kept in every link:
+
+```php
+$posts->appends(['sort' => 'date'])->fragment('list');
+// /news/page-2?sort=date#list
+```
+
+### The Blade component
+
+Use the component directly, with `smartPaginate()` or with a plain `paginate()` result:
+
 ```blade
-<x-smart-pagination 
-    :paginator="$posts" 
+<x-smart-pagination
+    :paginator="$posts"
     :reverse="true"
-    :page-pattern="post-p{page}.html"
-    :show-prev-next="true"
+    page-pattern="/page-{page}"
+    :show-prev-next="false"
 />
 ```
 
-## Publish Configuration (optional)
-Publish Configuration
+Or pass options to `links()`:
+
+```blade
+{{ $posts->links(['showPrevNext' => false]) }}
+{{ $posts->links('my.pagination') }}
+```
+
+The view gets `$paginator`, `$realPage`, `$displayPage`, `$totalPages`, `$reverse`,
+`$showPrevNext`, `$pageUrl($realPage)`, `$pageLabel($realPage)` and `$pages()`.
+
+`$pages()` returns the window to render: the first two pages, two around the current one,
+the last two, and `dots` entries for the gaps. Each page entry has `real`, `label`, `url`
+and `active`.
+
+### JSON and APIs
+
+`toArray()` and `jsonSerialize()` use the same URLs and labels as the HTML.
+Two extra keys are added: `display_page` and `reverse`.
+
+## Configuration
+
 ```bash
 php artisan vendor:publish --tag=smart-pagination-config
-```
-Publish Blade Views
-```bash
 php artisan vendor:publish --tag=smart-pagination-views
+php artisan vendor:publish --tag=smart-pagination-lang
 ```
 
+```php
+return [
+    'reverse_by_default' => false,
+    'page_pattern' => null,      // for example '/page-{page}'
+    'show_prev_next' => true,
+];
+```
+
+Translation keys live under `smart-pagination::pagination.*`
+(`label`, `previous`, `next`, `previous-label`, `next-label`, `dots`).
+
+## Upgrading from 1.x
+
+- PHP 8.4 and Laravel 13 are required.
+- `url()` and the JSON output now follow reverse numbering and the page pattern.
+  Code that expected `?page=N` with real page numbers in reverse mode must use `currentPage()` for the real page.
+- The component constructor no longer accepts an array.
+- Translation keys moved from `smart-pagination.*` to `smart-pagination::pagination.*`.
 
 ## License
+
 MIT

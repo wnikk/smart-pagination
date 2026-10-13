@@ -1,10 +1,11 @@
 <?php
+
 namespace Wnikk\SmartPagination;
 
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\ServiceProvider;
-use Wnikk\SmartPagination\View\Components\SmartPagination;
 use Wnikk\SmartPagination\Macros\PaginateMacro;
+use Wnikk\SmartPagination\View\Components\SmartPagination;
 
 class SmartPaginationServiceProvider extends ServiceProvider
 {
@@ -13,7 +14,7 @@ class SmartPaginationServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        $this->mergeConfigFrom(__DIR__ . '/../config/smart-pagination.php', 'smart-pagination');
+        $this->mergeConfigFrom(__DIR__.'/../config/smart-pagination.php', 'smart-pagination');
     }
 
     /**
@@ -21,26 +22,23 @@ class SmartPaginationServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        // Publish config
         $this->publishes([
-            __DIR__ . '/../config/messages.php' => config_path('smart-pagination.php'),
+            __DIR__.'/../config/smart-pagination.php' => config_path('smart-pagination.php'),
         ], 'smart-pagination-config');
 
-        // Publish views for customization
         $this->publishes([
-            __DIR__ . '/../resources/views' => resource_path('views/vendor/smart-pagination'),
+            __DIR__.'/../resources/views' => resource_path('views/vendor/smart-pagination'),
         ], 'smart-pagination-views');
 
-        // Register the SmartPaginator macro
+        $this->publishes([
+            __DIR__.'/../resources/lang' => $this->app->langPath('vendor/smart-pagination'),
+        ], 'smart-pagination-lang');
+
         PaginateMacro::register();
 
-        // Register the SmartPagination Blade component
         Blade::component('smart-pagination', SmartPagination::class);
 
-        // Load views from package
-        $this->loadViewsFrom(__DIR__ . '/../resources/views', 'smart-pagination');
-
-        // Load translations from package
-        $this->loadTranslationsFrom(__DIR__.'/../resources/lang');
+        $this->loadViewsFrom(__DIR__.'/../resources/views', 'smart-pagination');
+        $this->loadTranslationsFrom(__DIR__.'/../resources/lang', 'smart-pagination');
     }
 }

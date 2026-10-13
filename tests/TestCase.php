@@ -1,21 +1,28 @@
 <?php
 
 namespace Tests;
+
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 use Orchestra\Testbench\TestCase as BaseTestCase;
+use Wnikk\SmartPagination\SmartPaginationServiceProvider;
 
 abstract class TestCase extends BaseTestCase
 {
-    // Optional: register your package's service provider
-    protected function getPackageProviders($app)
+    protected function getPackageProviders($app): array
     {
-        return [
-            \Wnikk\SmartPagination\SmartPaginationServiceProvider::class,
-        ];
+        return [SmartPaginationServiceProvider::class];
     }
 
-    // Optional: set up environment
-    protected function getEnvironmentSetUp($app)
+    protected function setUp(): void
     {
-        // Example: $app['config']->set('smart-pagination.reverse_by_default', true);
+        parent::setUp();
+
+        Schema::create('articles', function (Blueprint $table) {
+            $table->id();
+            $table->string('title');
+            $table->text('content');
+            $table->timestamps();
+        });
     }
 }

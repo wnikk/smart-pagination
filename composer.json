@@ -1,9 +1,10 @@
 {
     "name": "wnikk/smart-pagination",
-    "version": "1.18.13",
+    "version": "2.1.1",
     "description": "Reverse pagination for Laravel with SEO-friendly links and stable URLs",
     "type": "library",
     "license": "MIT",
+    "keywords": ["laravel", "pagination", "reverse pagination", "seo", "blade"],
     "authors": [
         {
             "name": "Nikolay May",
@@ -33,12 +34,19 @@
         }
     },
     "require": {
-        "php": "^8.0",
-        "illuminate/support": "^11.0|^12.0|^13.0"
+        "php": "^8.4",
+        "illuminate/database": "^13.0",
+        "illuminate/pagination": "^13.0",
+        "illuminate/support": "^13.0",
+        "illuminate/view": "^13.0"
     },
     "require-dev": {
-        "orchestra/testbench": "*",
-        "phpunit/phpunit": "*"
+        "orchestra/testbench": "^11.0",
+        "phpunit/phpunit": "^12.0"
     },
-    "minimum-stability": "dev"
+    "scripts": {
+        "test": "phpunit"
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
 }

@@ -1,80 +1,161 @@
 <?php
+
 namespace Wnikk\SmartPagination\Pagination;
 
+use Illuminate\Contracts\View\View;
 use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Support\Facades\View;
+use Illuminate\Support\Collection;
 use Wnikk\SmartPagination\View\Components\SmartPagination;
 
+/**
+ * LengthAwarePaginator that knows about reverse mode and page patterns.
+ *
+ * Every URL the paginator gives out (url(), nextPageUrl(), toArray(), links())
+ * goes through the SmartPagination component, so JSON and HTML agree.
+ */
 class SmartPaginator extends LengthAwarePaginator
 {
     /**
-     * Whether pagination is in reverse mode
-     *
-     * @var bool
+     * Whether pagination is in reverse mode.
      */
     public bool $reverse = false;
 
     /**
-     * Create a new paginator instance.
+     * Page pattern for URL generation, '' means the default "?page={page}".
      */
+    public string $pagePattern = '';
+
     protected ?SmartPagination $component = null;
 
     /**
-     * @inherited
+     * @param array{path?: string, pageName?: string, reverse?: bool, pagePattern?: string} $options
      */
     public function __construct($items, $total, $perPage, $currentPage = null, array $options = [])
     {
         parent::__construct($items, $total, $perPage, $currentPage, $options);
 
-        $this->component = new SmartPagination(
-            $this,
-            $this->reverse
-        );
+        $this->reverse     = (bool) ($options['reverse'] ?? false);
+        $this->pagePattern = (string) ($options['pagePattern'] ?? '');
     }
 
     /**
-     * Display the pagination links.
-     *
-     * @param string|array|null $view
-     * @param array $data
-     * @return \Illuminate\Contracts\View\View|\Closure|string
-     **/
-    public function links($view = null, $data = [])
+     * The Blade component that builds URLs and the page window.
+     */
+    public function component(): SmartPagination
     {
-        if (is_array($view) && empty($data)) {
-            $data = $view;
-            $view = null;
-        }
-        return $this->component->render($data);
+        return $this->component ??= new SmartPagination($this, $this->reverse, $this->pagePattern ?: null);
     }
 
     /**
-     * Generate the URL for a given page number.
+     * Page number shown to the visitor for the current page.
+     */
+    public function displayPage(): int
+    {
+        return $this->component()->pageLabel($this->currentPage());
+    }
+
+    /**
+     * Set the base path and, optionally, the page pattern.
+     *
+     * @param  string      $path
+     * @param  string|null $pattern must contain {page}; '' or null keeps the current pattern
+     * @return $this
+     */
+    public function withPath($path, ?string $pattern = null): static
+    {
+        parent::withPath($path);
+
+        if ($pattern !== null && $pattern !== '') {
+            $this->withPagePattern($pattern);
+        }
+
+        return $this;
+    }
+
+    /**
+     * Set the page pattern, for example '/page-{page}' or '?p={page}'.
+     *
+     * @return $this
+     *
+     * @throws \InvalidArgumentException when the pattern has no {page} placeholder
+     */
+    public function withPagePattern(string $pattern): static
+    {
+        SmartPagination::assertPattern($pattern);
+
+        $this->pagePattern              = $pattern;
+        $this->component()->pagePattern = $pattern;
+
+        return $this;
+    }
+
+    /**
+     * Query string parameters added with appends().
+     *
+     * @return array<string, mixed>
+     */
+    public function queryParameters(): array
+    {
+        return $this->query;
+    }
+
+    /**
+     * URL of a real page (1 = the page without a number).
      *
      * @param int $page
-     * @return string
      */
-    public function pageUrl($page): string
+    public function url($page): string
     {
-        return $this->component->pageUrl($page);
+        return $this->component()->pageUrl((int) $page);
     }
 
     /**
-     * Set page pattern for URL generation.
-     *
-     * @param string $path
-     * @param string|null $pattern
-     * @return void
-     * @throws \InvalidArgumentException
+     * Alias of url() that makes the "real page" meaning explicit.
      */
-    public function withPath($path, $pattern = null)
+    public function pageUrl(int $realPage): string
     {
-        if ($pattern) {
-            if (!str_contains($pattern, '{page}')) {
-                throw new \InvalidArgumentException("Page pattern must contain '{page}' placeholder.");
-            }
-            $this->component->pagePattern = $pattern;
+        return $this->component()->pageUrl($realPage);
+    }
+
+    /**
+     * Render the pagination links.
+     *
+     * @param  string|array|null $view
+     * @param  array             $data
+     * @return View
+     */
+    public function render($view = null, $data = [])
+    {
+        if (is_array($view)) {
+            [$view, $data] = [null, $view + $data];
         }
-        parent::withPath($path);
+
+        return $this->component()->render($view, $data);
+    }
+
+    /**
+     * Link array for JSON output, with display page numbers as labels.
+     */
+    public function linkCollection(): Collection
+    {
+        $links = new Collection;
+
+        foreach ($this->component()->pages() as $page) {
+            $links->push($page['type'] === 'dots'
+                ? ['url' => null, 'label' => '...', 'active' => false]
+                : ['url' => $page['url'], 'label' => (string) $page['label'], 'page' => $page['real'], 'active' => $page['active']]);
+        }
+
+        return $links
+            ->prepend(['url' => $this->previousPageUrl(), 'label' => __('pagination.previous'), 'active' => false])
+            ->push(['url' => $this->nextPageUrl(), 'label' => __('pagination.next'), 'active' => false]);
+    }
+
+    public function toArray(): array
+    {
+        return parent::toArray() + [
+            'display_page' => $this->displayPage(),
+            'reverse'      => $this->reverse,
+        ];
     }
 }
