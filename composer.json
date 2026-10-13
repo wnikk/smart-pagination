@@ -1,6 +1,6 @@
 {
     "name": "wnikk/smart-pagination",
-    "version": "2.1.1",
+    "version": "2.2.1",
     "description": "Reverse pagination for Laravel with SEO-friendly links and stable URLs",
     "type": "library",
     "license": "MIT",
