@@ -2,8 +2,10 @@
 
 namespace Tests\Feature;
 
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\ServiceProvider;
 use Tests\TestCase;
+use Wnikk\SmartPagination\View\Components\SmartPagination;
 
 class ServiceProviderTest extends TestCase
 {
@@ -24,6 +26,19 @@ class ServiceProviderTest extends TestCase
                 $this->assertFileExists($source, $tag);
             }
         }
+    }
+
+    public function test_boot_does_not_resolve_the_blade_compiler(): void
+    {
+        $this->assertFalse($this->app->resolved('blade.compiler'));
+    }
+
+    public function test_component_alias_is_registered_once_the_compiler_is_resolved(): void
+    {
+        $this->assertSame(
+            SmartPagination::class,
+            Blade::getClassComponentAliases()['smart-pagination'] ?? null
+        );
     }
 
     public function test_translations_are_loaded(): void
